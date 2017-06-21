@@ -8,7 +8,7 @@ class Model {
 		this.tableId	= _.isNil(id_alias) ? 'id' : id_alias;
 		this.fillable   = fillable;
 		this.required   = required;
-		this.preserved  = preserved;
+		this.preserved  = _.concat(this.tableId, preserved);
 		this.selected	= _.chain(this.tableId).concat(fillable).difference(hidden).value();
 		this.ascertain	= ascertain;
 	}
