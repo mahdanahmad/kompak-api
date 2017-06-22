@@ -1,10 +1,10 @@
 const _				= require('lodash');
 const async			= require('async');
 
-const provinces		= require('../models/provinces');
-const regencies		= require('../models/regencies');
-const districts		= require('../models/districts');
-const villages		= require('../models/villages');
+const province		= require('../models/province');
+const regency		= require('../models/regency');
+const district		= require('../models/district');
+const village		= require('../models/village');
 
 const globalMsg		= require('../helpers/messages');
 
@@ -14,7 +14,7 @@ const deepCounter	= (args, callback) => {
 	async.waterfall([
 		(flowCallback) => {
 			if (!_.isNil(provinceId)) {
-				provinces.find(provinceId, (err, result) => {
+				province.find(provinceId, (err, result) => {
 					if (err) { return flowCallback([err]); }
 					if (_.isNil(result)) { return flowCallback(['Provinces with id ' + provinceId + ' not found.']); }
 
@@ -26,7 +26,7 @@ const deepCounter	= (args, callback) => {
 		},
 		(flowCallback) => {
 			if (!_.isNil(regencyId)) {
-				regencies.findOne('province_id = ? AND id = ?', [provinceId, regencyId], (err, result) => {
+				regency.findOne('province_id = ? AND id = ?', [provinceId, regencyId], (err, result) => {
 					if (err) { return flowCallback([err]); }
 					if (_.isNil(result)) { return flowCallback(['Regency with id ' + regencyId + ' from province_id ' + provinceId + ' not found.']); }
 
@@ -38,7 +38,7 @@ const deepCounter	= (args, callback) => {
 		},
 		(flowCallback) => {
 			if (!_.isNil(districtId)) {
-				districts.findOne('regency_id = ? AND id = ?', [regencyId, districtId], (err, result) => {
+				district.findOne('regency_id = ? AND id = ?', [regencyId, districtId], (err, result) => {
 					if (err) { return flowCallback([err]); }
 					if (_.isNil(result)) { return flowCallback(['District with id ' + districtId + ' from province_id ' + provinceId + ' and regency_id ' + regencyId + ' not found.']); }
 
@@ -50,7 +50,7 @@ const deepCounter	= (args, callback) => {
 		},
 		(flowCallback) => {
 			if (!_.isNil(villageId)) {
-				villages.findOne('district_id = ? AND id = ?', [districtId, villageId], (err, result) => {
+				village.findOne('district_id = ? AND id = ?', [districtId, villageId], (err, result) => {
 					if (err) { return flowCallback([err]); }
 					if (_.isNil(result)) { return flowCallback(['Village with id ' + villageId + ' from province_id ' + provinceId + ', regency_id ' + regencyId + ' and district_id ' + districtId + ' not found.']); }
 

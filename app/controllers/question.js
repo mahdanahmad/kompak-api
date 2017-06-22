@@ -1,7 +1,7 @@
 const _				= require('lodash');
 const async			= require('async');
 
-const regencies		= require('../models/regencies');
+const question		= require('../models/question');
 
 const globalMsg		= require('../helpers/messages');
 
@@ -13,7 +13,7 @@ const globalMsg		= require('../helpers/messages');
 module.exports.index = (input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Get all regencies success.';
+	let message         = 'Get all questions success.';
 	let result          = null;
 
 	const limit			= !_.isNil(input.limit)		? _.toInteger(input.limit)	: 0;
@@ -21,7 +21,7 @@ module.exports.index = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			regencies.findAll({limit, offset}, (err, result) => {
+			question.findAll({limit, offset}, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -48,12 +48,13 @@ module.exports.index = (input, callback) => {
 module.exports.store = (input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Insert new regency success.';
+	let message         = 'Insert new question success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			regencies.insertOne(input, (err, result) =>{
+			const ascertain	= { no_of_times_correctly_answered: 0, no_of_times_incorrectly_answered: 0, no_of_times_presented_as_challenge: 0, no_of_times_response_1: 0, no_of_times_response_2: 0, no_of_times_response_3: 0, no_of_times_response_4: 0, submitted_date: new Date() }
+			question.insertOne(_.assign(input, ascertain), (err, result) =>{
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -80,14 +81,14 @@ module.exports.store = (input, callback) => {
 module.exports.show = (id, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Get regency with id ' + id + ' success.';
+	let message         = 'Get question with id ' + id + ' success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			regencies.find(id, (err, result) => {
+			question.find(id, (err, result) => {
 				if (err) { return flowCallback(err); }
-				if (_.isNil(result)) { return flowCallback('Regency with id ' + id + ' not found.'); }
+				if (_.isNil(result)) { return flowCallback('Question with id ' + id + ' not found.'); }
 
 				flowCallback(null, result);
 			});
@@ -114,12 +115,13 @@ module.exports.show = (id, callback) => {
 module.exports.update = (id, input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Update data regency with id ' + id + ' success.';
+	let message         = 'Update data question with id ' + id + ' success.';
 	let result			= null;
 
 	async.waterfall([
 		(flowCallback) => {
-			regencies.update(id, input, (err, result) => {
+			const ascertain	= { modified_date : new Date() };
+			question.update(id, _.assign(input, ascertain), (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -148,12 +150,12 @@ module.exports.update = (id, input, callback) => {
 module.exports.destroy = (id, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Remove regency with id ' + id + ' success.';
+	let message         = 'Remove question with id ' + id + ' success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			regencies.delete(id, (err, result) => {
+			question.delete(id, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, null);

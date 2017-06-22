@@ -1,7 +1,7 @@
 const _				= require('lodash');
 const async			= require('async');
 
-const settings		= require('../models/settings');
+const setting		= require('../models/setting');
 
 const globalMsg		= require('../helpers/messages');
 
@@ -20,7 +20,7 @@ module.exports.index = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			settings.findOne((err, result) => {
+			setting.findOne((err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -73,7 +73,7 @@ module.exports.update = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			settings.update(settingID, input, (err, result) => {
+			setting.update(settingID, input, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);

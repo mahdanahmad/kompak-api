@@ -12,21 +12,19 @@ const globalError	= (errcode) => {
 }
 
 class Model {
-	constructor(tableName, fillable, required, preserved, hidden, ascertain, id_alias, ...opts) {
+	constructor(tableName, fillable, required, preserved, hidden, id_alias, ...opts) {
 		this.tableName  = tableName;
 		this.tableId	= _.isNil(id_alias) ? 'id' : id_alias;
 		this.fillable   = fillable;
 		this.required   = required;
 		this.preserved  = _.concat(this.tableId, preserved);
 		this.selected	= _.chain(this.tableId).concat(fillable).difference(hidden).uniq().value();
-		this.ascertain	= ascertain;
 	}
 
 	insertOne(data, callback) {
-		const missing   = _.difference(this.required, _.chain(data).pickBy((o) => (!_.isEmpty(o))).keys().value());
+		const missing   = _.difference(this.required, _.chain(data).pickBy((o) => (!_.isEmpty(o) || _.isDate(o))).keys().value());
 		if (missing.length === 0) {
 			db.get().query('INSERT INTO ' + this.tableName + ' SET ?', _.pick(data, this.fillable), (err, result) => {
-				console.log(err);
 				if (err) { return callback(globalError(err.code)); }
 				callback(null, { id: result.insertId })
 			});
@@ -80,7 +78,7 @@ class Model {
 			if (err) { return callback(globalError(err.code)); }
 			if (_.isEmpty(result)) { return callback(this.tableName + ' with id ' + id + ' not found.'); }
 
-			let cherry    = _.pickBy(update, (o, key) => (_.chain(this.fillable).difference(this.preserved).includes(key).value() && !_.isEmpty(o)));
+			let cherry    = _.pickBy(update, (o, key) => (_.chain(this.fillable).difference(this.preserved).includes(key).value() && (!_.isEmpty(o) || _.isDate(o))));
 			if (!_.isEmpty(cherry)) {
 				db.get().query('UPDATE ?? SET ' + _.map(cherry, (o, key) => (key + ' = ?')).join(',') + ' WHERE ' + this.tableId + ' = ?', [this.tableName, ..._.values(cherry), id], (err, result) => {
 					if (err) { return callback(globalError(err.code)); }

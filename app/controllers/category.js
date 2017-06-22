@@ -1,7 +1,7 @@
 const _				= require('lodash');
 const async			= require('async');
 
-const provinces		= require('../models/provinces');
+const category		= require('../models/category');
 
 const globalMsg		= require('../helpers/messages');
 
@@ -13,7 +13,7 @@ const globalMsg		= require('../helpers/messages');
 module.exports.index = (input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Get all provinces success.';
+	let message         = 'Get all categories success.';
 	let result          = null;
 
 	const limit			= !_.isNil(input.limit)		? _.toInteger(input.limit)	: 0;
@@ -21,7 +21,7 @@ module.exports.index = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			provinces.findAll({limit, offset}, (err, result) => {
+			category.findAll({limit, offset}, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -48,12 +48,12 @@ module.exports.index = (input, callback) => {
 module.exports.store = (input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Insert new province success.';
+	let message         = 'Insert new category success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			provinces.insertOne(input, (err, result) =>{
+			category.insertOne(input, (err, result) =>{
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -80,14 +80,14 @@ module.exports.store = (input, callback) => {
 module.exports.show = (id, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Get province with id ' + id + ' success.';
+	let message         = 'Get category with id ' + id + ' success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			provinces.find(id, (err, result) => {
+			category.find(id, (err, result) => {
 				if (err) { return flowCallback(err); }
-				if (_.isNil(result)) { return flowCallback('Province with id ' + id + ' not found.'); }
+				if (_.isNil(result)) { return flowCallback('Category with id ' + id + ' not found.'); }
 
 				flowCallback(null, result);
 			});
@@ -114,12 +114,12 @@ module.exports.show = (id, callback) => {
 module.exports.update = (id, input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Update data province with id ' + id + ' success.';
+	let message         = 'Update data category with id ' + id + ' success.';
 	let result			= null;
 
 	async.waterfall([
 		(flowCallback) => {
-			provinces.update(id, input, (err, result) => {
+			category.update(id, input, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -148,12 +148,12 @@ module.exports.update = (id, input, callback) => {
 module.exports.destroy = (id, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Remove province with id ' + id + ' success.';
+	let message         = 'Remove category with id ' + id + ' success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			provinces.delete(id, (err, result) => {
+			category.delete(id, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, null);

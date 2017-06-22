@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, '/public')));
 app.use('/', require('./routes/index'));
 
-const routeList		= ['badges', 'education', 'institution', 'settings', 'provinces', 'regencies', 'districts', 'villages', 'location'];
+const routeList		= ['badge', 'education', 'institution', 'setting', 'province', 'regency', 'district', 'village', 'location', 'user', 'category', 'question', 'answer', 'essay', 'essayAnswer'];
 routeList.forEach((o) => { app.use('/' + o, require('./routes/' + o)); });
 
 // catch 404 and forward to error handler

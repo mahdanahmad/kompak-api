@@ -1,7 +1,7 @@
 const _				= require('lodash');
 const async			= require('async');
 
-const badges  		= require('../models/badges');
+const district		= require('../models/district');
 
 const globalMsg		= require('../helpers/messages');
 
@@ -13,7 +13,7 @@ const globalMsg		= require('../helpers/messages');
 module.exports.index = (input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Get all badges success.';
+	let message         = 'Get all districts success.';
 	let result          = null;
 
 	const limit			= !_.isNil(input.limit)		? _.toInteger(input.limit)	: 0;
@@ -21,7 +21,7 @@ module.exports.index = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			badges.findAll({limit, offset}, (err, result) => {
+			district.findAll({limit, offset}, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -48,12 +48,12 @@ module.exports.index = (input, callback) => {
 module.exports.store = (input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Insert new badge success.';
+	let message         = 'Insert new district success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			badges.insertOne(input, (err, result) =>{
+			district.insertOne(input, (err, result) =>{
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -80,14 +80,14 @@ module.exports.store = (input, callback) => {
 module.exports.show = (id, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Get badge with id ' + id + ' success.';
+	let message         = 'Get district with id ' + id + ' success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			badges.find(id, (err, result) => {
+			district.find(id, (err, result) => {
 				if (err) { return flowCallback(err); }
-				if (_.isNil(result)) { return flowCallback('Badge with id ' + id + ' not found.'); }
+				if (_.isNil(result)) { return flowCallback('District with id ' + id + ' not found.'); }
 
 				flowCallback(null, result);
 			});
@@ -114,12 +114,12 @@ module.exports.show = (id, callback) => {
 module.exports.update = (id, input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Update data badge with id ' + id + ' success.';
+	let message         = 'Update data district with id ' + id + ' success.';
 	let result			= null;
 
 	async.waterfall([
 		(flowCallback) => {
-			badges.update(id, input, (err, result) => {
+			district.update(id, input, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -148,12 +148,12 @@ module.exports.update = (id, input, callback) => {
 module.exports.destroy = (id, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Remove badge with id ' + id + ' success.';
+	let message         = 'Remove district with id ' + id + ' success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			badges.delete(id, (err, result) => {
+			district.delete(id, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, null);

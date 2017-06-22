@@ -1,7 +1,7 @@
 const _				= require('lodash');
 const async			= require('async');
 
-const education		= require('../models/education');
+const essay			= require('../models/essay');
 
 const globalMsg		= require('../helpers/messages');
 
@@ -13,7 +13,7 @@ const globalMsg		= require('../helpers/messages');
 module.exports.index = (input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Get all educations success.';
+	let message         = 'Get all essays success.';
 	let result          = null;
 
 	const limit			= !_.isNil(input.limit)		? _.toInteger(input.limit)	: 0;
@@ -21,7 +21,7 @@ module.exports.index = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			education.findAll({limit, offset}, (err, result) => {
+			essay.findAll({limit, offset}, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -48,12 +48,13 @@ module.exports.index = (input, callback) => {
 module.exports.store = (input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Insert new education success.';
+	let message         = 'Insert new essay success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			education.insertOne(input, (err, result) =>{
+			const ascertain	= { submitted_date: new Date() }
+			essay.insertOne(_.assign(input, ascertain), (err, result) =>{
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -80,14 +81,14 @@ module.exports.store = (input, callback) => {
 module.exports.show = (id, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Get education with id ' + id + ' success.';
+	let message         = 'Get essay with id ' + id + ' success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			education.find(id, (err, result) => {
+			essay.find(id, (err, result) => {
 				if (err) { return flowCallback(err); }
-				if (_.isNil(result)) { return flowCallback('Education with id ' + id + ' not found.'); }
+				if (_.isNil(result)) { return flowCallback('Essay with id ' + id + ' not found.'); }
 
 				flowCallback(null, result);
 			});
@@ -114,12 +115,12 @@ module.exports.show = (id, callback) => {
 module.exports.update = (id, input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Update data education with id ' + id + ' success.';
+	let message         = 'Update data essay with id ' + id + ' success.';
 	let result			= null;
 
 	async.waterfall([
 		(flowCallback) => {
-			education.update(id, input, (err, result) => {
+			essay.update(id, input, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -148,12 +149,12 @@ module.exports.update = (id, input, callback) => {
 module.exports.destroy = (id, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Remove education with id ' + id + ' success.';
+	let message         = 'Remove essay with id ' + id + ' success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			education.delete(id, (err, result) => {
+			essay.delete(id, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, null);

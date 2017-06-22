@@ -5,12 +5,11 @@ const fillable  = ['id', 'province_id', 'name_kab'];
 const required  = ['id', 'province_id', 'name_kab'];
 const preserved	= ['province_id'];
 const hidden	= [];
-const ascertain	= {};
 const id_alias	= 'id';
 
 class Collection extends Model {
 	constructor() {
-		super(table, fillable, required, preserved, hidden, ascertain, id_alias);
+		super(table, fillable, required, preserved, hidden, id_alias);
 	}
 }
 

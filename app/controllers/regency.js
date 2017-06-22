@@ -1,7 +1,7 @@
 const _				= require('lodash');
 const async			= require('async');
 
-const villages		= require('../models/villages');
+const regency		= require('../models/regency');
 
 const globalMsg		= require('../helpers/messages');
 
@@ -13,7 +13,7 @@ const globalMsg		= require('../helpers/messages');
 module.exports.index = (input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Get all villages success.';
+	let message         = 'Get all regencies success.';
 	let result          = null;
 
 	const limit			= !_.isNil(input.limit)		? _.toInteger(input.limit)	: 0;
@@ -21,7 +21,7 @@ module.exports.index = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			villages.findAll({limit, offset}, (err, result) => {
+			regency.findAll({limit, offset}, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -48,12 +48,12 @@ module.exports.index = (input, callback) => {
 module.exports.store = (input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Insert new village success.';
+	let message         = 'Insert new regency success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			villages.insertOne(input, (err, result) =>{
+			regency.insertOne(input, (err, result) =>{
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -80,14 +80,14 @@ module.exports.store = (input, callback) => {
 module.exports.show = (id, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Get village with id ' + id + ' success.';
+	let message         = 'Get regency with id ' + id + ' success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			villages.find(id, (err, result) => {
+			regency.find(id, (err, result) => {
 				if (err) { return flowCallback(err); }
-				if (_.isNil(result)) { return flowCallback('Village with id ' + id + ' not found.'); }
+				if (_.isNil(result)) { return flowCallback('Regency with id ' + id + ' not found.'); }
 
 				flowCallback(null, result);
 			});
@@ -114,12 +114,12 @@ module.exports.show = (id, callback) => {
 module.exports.update = (id, input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Update data village with id ' + id + ' success.';
+	let message         = 'Update data regency with id ' + id + ' success.';
 	let result			= null;
 
 	async.waterfall([
 		(flowCallback) => {
-			villages.update(id, input, (err, result) => {
+			regency.update(id, input, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -148,12 +148,12 @@ module.exports.update = (id, input, callback) => {
 module.exports.destroy = (id, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Remove village with id ' + id + ' success.';
+	let message         = 'Remove regency with id ' + id + ' success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			villages.delete(id, (err, result) => {
+			regency.delete(id, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, null);
