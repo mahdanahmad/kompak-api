@@ -1,7 +1,7 @@
 const _				= require('lodash');
 const async			= require('async');
 
-const education		= require('../models/education');
+const provinces		= require('../models/provinces');
 
 const globalMsg		= require('../helpers/messages');
 
@@ -13,7 +13,7 @@ const globalMsg		= require('../helpers/messages');
 module.exports.index = (input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Get all education success.';
+	let message         = 'Get all provinces success.';
 	let result          = null;
 
 	const limit			= !_.isNil(input.limit)		? _.toInteger(input.limit)	: 0;
@@ -21,7 +21,7 @@ module.exports.index = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			education.findAll({limit, offset}, (err, result) => {
+			provinces.findAll({limit, offset}, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -48,12 +48,12 @@ module.exports.index = (input, callback) => {
 module.exports.store = (input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Insert new education success.';
+	let message         = 'Insert new province success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			education.insertOne(input, (err, result) =>{
+			provinces.insertOne(input, (err, result) =>{
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -80,14 +80,14 @@ module.exports.store = (input, callback) => {
 module.exports.show = (id, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Get education with id ' + id + ' success.';
+	let message         = 'Get province with id ' + id + ' success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			education.find(id, (err, result) => {
+			provinces.find(id, (err, result) => {
 				if (err) { return flowCallback(err); }
-				if (_.isNil(result)) { return flowCallback('Education with id ' + id + ' not found.'); }
+				if (_.isNil(result)) { return flowCallback('Province with id ' + id + ' not found.'); }
 
 				flowCallback(null, result);
 			});
@@ -114,12 +114,12 @@ module.exports.show = (id, callback) => {
 module.exports.update = (id, input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Update data education with id ' + id + ' success.';
+	let message         = 'Update data province with id ' + id + ' success.';
 	let result			= null;
 
 	async.waterfall([
 		(flowCallback) => {
-			education.update(id, input, (err, result) => {
+			provinces.update(id, input, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
@@ -148,12 +148,12 @@ module.exports.update = (id, input, callback) => {
 module.exports.destroy = (id, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
-	let message         = 'Remove education with id ' + id + ' success.';
+	let message         = 'Remove province with id ' + id + ' success.';
 	let result          = null;
 
 	async.waterfall([
 		(flowCallback) => {
-			education.delete(id, (err, result) => {
+			provinces.delete(id, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, null);

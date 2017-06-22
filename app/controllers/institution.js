@@ -87,7 +87,7 @@ module.exports.show = (id, callback) => {
 		(flowCallback) => {
 			institution.find(id, (err, result) => {
 				if (err) { return flowCallback(err); }
-				if (_.isNil(result)) { return flowCallback('Badge with id ' + id + ' not found.'); }
+				if (_.isNil(result)) { return flowCallback('Institution with id ' + id + ' not found.'); }
 
 				flowCallback(null, result);
 			});
