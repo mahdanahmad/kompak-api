@@ -26,7 +26,7 @@ const deepCounter	= (args, callback) => {
 		},
 		(flowCallback) => {
 			if (!_.isNil(regencyId)) {
-				regency.findOne('province_id = ? AND id = ?', [provinceId, regencyId], (err, result) => {
+				regency.findOne({ where: ['province_id = ? AND id = ?', [provinceId, regencyId]]}, (err, result) => {
 					if (err) { return flowCallback([err]); }
 					if (_.isNil(result)) { return flowCallback(['Regency with id ' + regencyId + ' from province_id ' + provinceId + ' not found.']); }
 
@@ -38,7 +38,7 @@ const deepCounter	= (args, callback) => {
 		},
 		(flowCallback) => {
 			if (!_.isNil(districtId)) {
-				district.findOne('regency_id = ? AND id = ?', [regencyId, districtId], (err, result) => {
+				district.findOne({ where: ['regency_id = ? AND id = ?', [regencyId, districtId]]}, (err, result) => {
 					if (err) { return flowCallback([err]); }
 					if (_.isNil(result)) { return flowCallback(['District with id ' + districtId + ' from province_id ' + provinceId + ' and regency_id ' + regencyId + ' not found.']); }
 
@@ -50,7 +50,7 @@ const deepCounter	= (args, callback) => {
 		},
 		(flowCallback) => {
 			if (!_.isNil(villageId)) {
-				village.findOne('district_id = ? AND id = ?', [districtId, villageId], (err, result) => {
+				village.findOne({ where: ['district_id = ? AND id = ?', [districtId, villageId]]}, (err, result) => {
 					if (err) { return flowCallback([err]); }
 					if (_.isNil(result)) { return flowCallback(['Village with id ' + villageId + ' from province_id ' + provinceId + ', regency_id ' + regencyId + ' and district_id ' + districtId + ' not found.']); }
 
@@ -87,14 +87,14 @@ module.exports.index = (args, input, callback) => {
 				if (err) { return flowCallback(err); }
 				let collection, tableId, id = null;
 				switch (result) {
-					case 'province'	: collection = regencies; tableId = 'province_id'; id = provinceId; break;
-					case 'regency'	: collection = districts; tableId = 'regency_id'; id = regencyId; break;
-					case 'district'	: collection = villages; tableId = 'district_id'; id = districtId; break;
-					case 'village'	: collection = villages; tableId = 'id'; id = villageId; break;
-					default: collection = provinces;
+					case 'province'	: collection = regency; tableId = 'province_id'; id = provinceId; break;
+					case 'regency'	: collection = district; tableId = 'regency_id'; id = regencyId; break;
+					case 'district'	: collection = village; tableId = 'district_id'; id = districtId; break;
+					case 'village'	: collection = village; tableId = 'id'; id = villageId; break;
+					default: collection = province;
 				}
 
-				collection.findAll((tableId ? tableId + ' = ?' : 1), [id], {limit, offset}, (err, result) => (flowCallback(err, result)));
+				collection.findAll({ where: [(tableId ? tableId + ' = ?' : 1), [id]] }, {limit, offset}, (err, result) => (flowCallback(err, result)));
 			});
 		}
 	], (err, asyncResult) => {

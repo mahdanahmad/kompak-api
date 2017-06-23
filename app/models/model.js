@@ -41,33 +41,38 @@ class Model {
 	}
 
 	findOne(...args) {
-		let queryLine = null, queryValue = [], callback = null;
+		let query = null, callback = null;
 
 		switch (args.length) {
 			case 1: [callback] = args; break;
-			case 3: [queryLine, queryValue, callback] = args; break;
+			case 2: [query, callback] = args; break;
 			default: callback = _.last(args);
 		}
+		let queryLine	= _.chain(query).map((o, key) => (_.chain(key).startCase().toUpper().value() + ' ' + o[0])).join(' ').value();
+		let queryValue	= _.chain(query).flatMap((o) => (o[1])).pullAll([null, undefined]).value();
 
-		db.get().query('SELECT ?? FROM ??' + (queryLine ? ' WHERE ' + queryLine : '') + ' LIMIT 1', [this.selected, this.tableName, ...(queryValue ? queryValue : [])], (err, result) => {
+		db.get().query('SELECT ?? FROM ??' + queryLine + ' LIMIT 1', [this.selected, this.tableName, ...(queryValue ? queryValue : [])], (err, result) => {
 			if (err) { return callback(globalError(err.code)); }
 			callback(null, _.isEmpty(result) ? null : result);
 		});
 	}
 
 	findAll(...args) {
-		let queryLine = null, queryValue = [], opts = {}, callback = null;
+		let query = null, selected = null, opts = {}, callback = null;
 
 		switch (args.length) {
 			case 1: [callback] = args; break;
 			case 2: [opts, callback] = args; break;
-			case 4: [queryLine, queryValue, opts, callback] = args; break;
+			case 3: [query, opts, callback] = args; break;
+			case 4: [selected, query, opts, callback] = args; break;
 			default: callback = _.last(args);
 		}
+		let queryLine	= _.chain(query).map((o, key) => (_.chain(key).startCase().toUpper().value() + ' ' + o[0])).join(' ').value();
+		let queryValue	= _.chain(query).flatMap((o) => (o[1])).pullAll([null, undefined]).value();
 
 		const limit 	= !_.isNil(opts.limit) && _.isInteger(opts.limit)	? opts.limit    : 0;
 		const offset	= !_.isNil(opts.offset) && _.isInteger(opts.offset)	? opts.offset	: 0;
-		db.get().query('SELECT ?? FROM ??' + (queryLine ? ' WHERE ' + queryLine : '') + (limit ? ' LIMIT ' + [offset, limit].join(',') : ''), [this.selected, this.tableName, ...queryValue], (err, result) => {
+		db.get().query('SELECT ?? FROM ??' + queryLine + (limit ? ' LIMIT ' + [offset, limit].join(',') : ''), [(selected ? _.concat(this.tableName + '.' + this.tableId, selected) : this.selected), this.tableName, ...queryValue], (err, result) => {
 			if (err) { return callback(globalError(err.code)); }
 			callback(null, _.isEmpty(result) ? null : result);
 		});

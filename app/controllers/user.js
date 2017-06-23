@@ -21,12 +21,15 @@ module.exports.index = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			user.findAll({limit, offset}, (err, result) => {
-				if (err) { return flowCallback(err); }
+			let query		= _.omitBy({
+				innerJoin: ['tbl_villages ON tbl_usrs.usr_village = tbl_villages.id'],
+				where: !_.isNil(input.like) ? ['usr_display_name LIKE ?', ['%' + input.like + '%']] : null,
+				orderBy: !_.isNil(input.orderby) ? [input.orderby]	: null
+			}, _.isNil);
+			let selected	= ['usr_email', 'usr_display_name', 'usr_designation', 'usr_gender', 'tbl_villages.name_desa', 'usr_years', 'usr_contribution'];
 
-				flowCallback(null, result);
-			});
-		},
+			user.findAll(selected, query, {limit, offset}, (err, result) => flowCallback(err, result));
+		}
 	], (err, asyncResult) => {
 		if (err) {
 			response    = 'FAILED';
