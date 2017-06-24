@@ -22,7 +22,7 @@ module.exports.index = (input, callback) => {
 	async.waterfall([
 		(flowCallback) => {
 			let query		= _.omitBy({
-				innerJoin: ['tbl_villages ON tbl_usrs.usr_village = tbl_villages.id INNER JOIN tbl_institution ON tbl_usrs.usr_institution = tbl_institution.id'],
+				leftJoin: ['tbl_villages ON tbl_usrs.usr_village = tbl_villages.id LEFT JOIN tbl_institution ON tbl_usrs.usr_institution = tbl_institution.id'],
 				where: !_.isNil(input.like) ? ['usr_display_name LIKE ?', ['%' + input.like + '%']] : null,
 				orderBy: !_.isNil(input.orderby) ? [input.orderby]	: null
 			}, _.isNil);

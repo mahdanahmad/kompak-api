@@ -9,7 +9,19 @@ const app			= express();
 app.use(bodyParser.json({ limit: '200mb' }));
 app.use(bodyParser.urlencoded({ limit: '200mb', extended: true }));
 app.use(cookieParser());
-app.use(cors());
+
+if (process.env.APP_ENV === 'local') {
+	app.use(cors());
+} else {
+	app.use((req, res, next) => {
+		res.setHeader('Access-Control-Allow-Credentials', true);
+		res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+		res.setHeader('Access-Control-Allow-Headers', 'Content-Type,X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5,  Date, X-Api-Version, X-File-Name');
+		res.setHeader('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS');
+
+		if (req.method === 'OPTIONS') { res.sendStatus(200); } else { next(); }
+	});
+}
 
 app.use(express.static(path.join(__dirname, '/public')));
 app.use('/', require('./routes/index'));
