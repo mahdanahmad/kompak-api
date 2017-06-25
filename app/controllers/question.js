@@ -21,7 +21,18 @@ module.exports.index = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			question.findAll({limit, offset}, (err, result) => {
+			let like		= !_.isNil(input.like) ? ['question_text LIKE ?', '%' + input.like + '%'] : null;
+			let category	= !_.isNil(input.category) ? ['question_category = ?', input.category] : null;
+			let where		= _.compact([like, category])
+
+			let query	= _.omitBy({
+				leftJoin: ['tbl_questions_categories ON tbl_questions.question_category = tbl_questions_categories.ID_category LEFT JOIN tbl_usrs ON tbl_questions.usr_id = tbl_usrs.ID'],
+				where: (where.length > 0) ? [_.chain(where).map((o) => (o[0])).join(' AND ').value(), _.flatMap(where, (o) => (o[1]))] : null,
+				orderBy: ['question_enabled'],
+			}, _.isNil);
+			let selected	= ['question_text', 'response_1', 'response_2', 'response_3', 'response_4', 'question_enabled', 'ID_category', 'correct_response', 'tbl_questions_categories.category_name', 'tbl_usrs.usr_display_name'];
+
+			question.findAll(selected, query, {limit, offset}, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
