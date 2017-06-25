@@ -36,7 +36,7 @@ class Model {
 	find(id, callback) {
 		db.get().query('SELECT ?? FROM ?? WHERE ' + this.tableId + ' = ?', [this.selected, this.tableName, id], (err, result) => {
 			if (err) { return callback(globalError(err.code)); }
-			callback(null, _.isEmpty(result) ? null : result);
+			callback(null, _.isEmpty(result) ? null : _.head(result));
 		});
 	}
 
@@ -53,7 +53,7 @@ class Model {
 
 		db.get().query('SELECT ?? FROM ??' + queryLine + ' LIMIT 1', [this.selected, this.tableName, ...(queryValue ? queryValue : [])], (err, result) => {
 			if (err) { return callback(globalError(err.code)); }
-			callback(null, _.isEmpty(result) ? null : result);
+			callback(null, _.isEmpty(result) ? null : _.head(result));
 		});
 	}
 
@@ -83,7 +83,8 @@ class Model {
 			if (err) { return callback(globalError(err.code)); }
 			if (_.isEmpty(result)) { return callback(this.tableName + ' with id ' + id + ' not found.'); }
 
-			let cherry    = _.pickBy(update, (o, key) => (_.chain(this.fillable).difference(this.preserved).includes(key).value() && (!_.isEmpty(o) || _.isDate(o))));
+			// let cherry    = _.pickBy(update, (o, key) => (_.chain(this.fillable).difference(this.preserved).includes(key).value() && (!_.isEmpty(o) || _.isDate(o))));
+			let cherry    = _.pickBy(update, (o, key) => (_.chain(this.fillable).difference(this.preserved).includes(key).value()));
 			if (!_.isEmpty(cherry)) {
 				db.get().query('UPDATE ?? SET ' + _.map(cherry, (o, key) => (key + ' = ?')).join(',') + ' WHERE ' + this.tableId + ' = ?', [this.tableName, ..._.values(cherry), id], (err, result) => {
 					if (err) { return callback(globalError(err.code)); }
