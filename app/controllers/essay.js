@@ -21,7 +21,17 @@ module.exports.index = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			essay.findAll({limit, offset}, (err, result) => {
+			let like		= !_.isNil(input.like) ? ['question LIKE ?', '%' + input.like + '%'] : null;
+			let category	= !_.isNil(input.category) ? ['tbl_essai.ID_category = ?', input.category] : null;
+			let where		= _.compact([like, category])
+
+			let query	= _.omitBy({
+				leftJoin: ['tbl_questions_categories ON tbl_essai.ID_category = tbl_questions_categories.ID_category'],
+				where: (where.length > 0) ? [_.chain(where).map((o) => (o[0])).join(' AND ').value(), _.flatMap(where, (o) => (o[1]))] : null,
+			}, _.isNil);
+			let selected	= ['question', 'tbl_questions_categories.ID_category', 'tbl_questions_categories.category_name'];
+
+			essay.findAll(selected, query, {limit, offset}, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
