@@ -18,46 +18,46 @@ const deepCounter	= (args, callback) => {
 					if (err) { return flowCallback([err]); }
 					if (_.isNil(result)) { return flowCallback(['Provinces with id ' + provinceId + ' not found.']); }
 
-					flowCallback(null);
+					flowCallback(null, result.name_prov);
 				});
 			} else {
-				flowCallback([null, 'top']);
+				flowCallback([null, { state: 'top' }]);
 			}
 		},
-		(flowCallback) => {
+		(name, flowCallback) => {
 			if (!_.isNil(regencyId)) {
 				regency.findOne({ where: ['province_id = ? AND id = ?', [provinceId, regencyId]]}, (err, result) => {
 					if (err) { return flowCallback([err]); }
 					if (_.isNil(result)) { return flowCallback(['Regency with id ' + regencyId + ' from province_id ' + provinceId + ' not found.']); }
 
-					flowCallback(null);
+					flowCallback(null, result.name_kab);
 				});
 			} else {
-				flowCallback([null, 'province']);
+				flowCallback([null, { state: 'province', name }]);
 			}
 		},
-		(flowCallback) => {
+		(name, flowCallback) => {
 			if (!_.isNil(districtId)) {
 				district.findOne({ where: ['regency_id = ? AND id = ?', [regencyId, districtId]]}, (err, result) => {
 					if (err) { return flowCallback([err]); }
 					if (_.isNil(result)) { return flowCallback(['District with id ' + districtId + ' from province_id ' + provinceId + ' and regency_id ' + regencyId + ' not found.']); }
 
-					flowCallback(null);
+					flowCallback(null, result.name_kec);
 				});
 			} else {
-				flowCallback([null, 'regency']);
+				flowCallback([null, { state: 'regency', name }]);
 			}
 		},
-		(flowCallback) => {
+		(name, flowCallback) => {
 			if (!_.isNil(villageId)) {
 				village.findOne({ where: ['district_id = ? AND id = ?', [districtId, villageId]]}, (err, result) => {
 					if (err) { return flowCallback([err]); }
 					if (_.isNil(result)) { return flowCallback(['Village with id ' + villageId + ' from province_id ' + provinceId + ', regency_id ' + regencyId + ' and district_id ' + districtId + ' not found.']); }
 
-					flowCallback([null, 'village']);
+					flowCallback([null, { state: 'village', name: result.name_desa }]);
 				});
 			} else {
-				flowCallback([null, 'district']);
+				flowCallback([null, { state: 'district', name }]);
 			}
 		}
 	], ([err, asyncResult]) => {
@@ -85,16 +85,26 @@ module.exports.index = (args, input, callback) => {
 		(flowCallback) => {
 			deepCounter(args, (err, result) => {
 				if (err) { return flowCallback(err); }
-				let collection, tableId, id = null;
-				switch (result) {
-					case 'province'	: collection = regency; tableId = 'province_id'; id = provinceId; break;
-					case 'regency'	: collection = district; tableId = 'regency_id'; id = regencyId; break;
-					case 'district'	: collection = village; tableId = 'district_id'; id = districtId; break;
+				let collection, tableId, tableName, id = null;
+				switch (result.state) {
+					case 'province'	: collection = regency; tableId = 'province_id'; id = provinceId; tableName = 'name_kab'; break;
+					case 'regency'	: collection = district; tableId = 'regency_id'; id = regencyId; tableName = 'name_kec'; break;
+					case 'district'	: collection = village; tableId = 'district_id'; id = districtId; tableName = 'name_desa'; break;
 					case 'village'	: collection = village; tableId = 'id'; id = villageId; break;
-					default: collection = province;
+					default: collection = province; tableName = 'name_prov';
 				}
 
-				collection.findAll({ where: [(tableId ? tableId + ' = ?' : 1), [id]] }, {limit, offset}, (err, result) => (flowCallback(err, result)));
+				let like		= !_.isNil(input.like) ? [tableName + ' LIKE ?', '%' + input.like + '%'] : null;
+				let prevId		= !_.isNil(tableId) ? [tableId + ' = ?', id] : null;
+				let where		= _.compact([like, prevId])
+
+				let query	= _.omitBy({
+					where: (where.length > 0) ? [_.chain(where).map((o) => (o[0])).join(' AND ').value(), _.flatMap(where, (o) => (o[1]))] : null,
+					orderBy: [tableName],
+				}, _.isNil);
+
+				let name	= result.name;
+				collection.findAll(query, {limit, offset}, (err, result) => (flowCallback(err, { data: result, name })));
 			});
 		}
 	], (err, asyncResult) => {
@@ -141,20 +151,21 @@ module.exports.store = (args, input, callback) => {
 		(flowCallback) => {
 			deepCounter(args, (err, result) => {
 				if (err) { return flowCallback(err); }
-				let collection, prevTable, prevId, nameTable = null;
-				switch (result) {
-					case 'province'	: collection = regencies; prevTable = 'province_id'; prevId = provinceId; nameTable = 'name_kab'; break;
-					case 'regency'	: collection = districts; prevTable = 'regency_id'; prevId = regencyId; nameTable = 'name_kec'; break;
-					case 'district'	: collection = villages; prevTable = 'district_id'; prevId = districtId; nameTable = 'name_desa'; break;
+				let collection, prevTable, prevId, tableName = null;
+				switch (result.state) {
+					case 'province'	: collection = regency; prevTable = 'province_id'; prevId = provinceId; tableName = 'name_kab'; break;
+					case 'regency'	: collection = district; prevTable = 'regency_id'; prevId = regencyId; tableName = 'name_kec'; break;
+					case 'district'	: collection = village; prevTable = 'district_id'; prevId = districtId; tableName = 'name_desa'; break;
 					case 'village'	: return flowCallback('No data can be added to this point.');
-					default: collection = provinces; nameTable = 'name_prov';
+					default: collection = province; tableName = 'name_prov';
 				}
 
-				let data	= { id : (!_.isNil(prevId) ? prevId : '') + id };
-				data[nameTable]	= name;
+				// let data	= { id : (!_.isNil(prevId) ? prevId : '') + id };
+				let data	= { id };
+				data[tableName]	= name;
 				if (prevId) { data[prevTable] = prevId; }
 
-				collection.insertOne(data, (err, result) => (flowCallback(err, result)));
+				collection.insertOne(data, (err, result) => (flowCallback(err, { id })));
 			});
 		},
 	], (err, asyncResult) => {
@@ -200,17 +211,17 @@ module.exports.update = (args, input, callback) => {
 		(flowCallback) => {
 			deepCounter(args, (err, result) => {
 				if (err) { return flowCallback(err); }
-				let collection, nameTable, id = null;
-				switch (result) {
-					case 'province'	: collection = provinces; nameTable = 'name_prov'; id = provinceId; break;
-					case 'regency'	: collection = regencies; nameTable = 'name_kab'; id = regencyId; break;
-					case 'district'	: collection = districts; nameTable = 'name_kec'; id = districtId; break;
-					case 'village'	: collection = villages; nameTable = 'name_desa'; id = villageId; break;
+				let collection, tableName, id = null;
+				switch (result.state) {
+					case 'province'	: collection = province; tableName = 'name_prov'; id = provinceId; break;
+					case 'regency'	: collection = regency; tableName = 'name_kab'; id = regencyId; break;
+					case 'district'	: collection = district; tableName = 'name_kec'; id = districtId; break;
+					case 'village'	: collection = village; tableName = 'name_desa'; id = villageId; break;
 					default: return flowCallback('No data can be edited in this point.');
 				}
 
 				let data	= {};
-				data[nameTable]	= name;
+				data[tableName]	= name;
 
 				collection.update(id, data, (err, result) => (flowCallback(err, result)));
 			});
@@ -248,11 +259,11 @@ module.exports.destroy = (args, callback) => {
 			deepCounter(args, (err, result) => {
 				if (err) { return flowCallback(err); }
 				let collection, id = null;
-				switch (result) {
-					case 'province'	: collection = provinces; id = provinceId; break;
-					case 'regency'	: collection = regencies; id = regencyId; break;
-					case 'district'	: collection = districts; id = districtId; break;
-					case 'village'	: collection = villages; id = villageId; break;
+				switch (result.state) {
+					case 'province'	: collection = province; id = provinceId; break;
+					case 'regency'	: collection = regency; id = regencyId; break;
+					case 'district'	: collection = district; id = districtId; break;
+					case 'village'	: collection = village; id = villageId; break;
 					default: return flowCallback('No data can be deleted in this point.');
 				}
 
