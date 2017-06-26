@@ -21,7 +21,18 @@ module.exports.index = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			answer.findAll({limit, offset}, (err, result) => {
+			let like		= !_.isNil(input.like) ? ['tbl_usrs.usr_display_name LIKE ?', '%' + input.like + '%'] : null;
+			let category	= !_.isNil(input.category) ? ['tbl_questions.question_category = ?', input.category] : null;
+			let where		= _.compact([like, category])
+
+			let query	= _.omitBy({
+				leftJoin: ['tbl_questions ON tbl_user_answer.question_id = tbl_questions.ID_question LEFT JOIN tbl_usrs ON tbl_user_answer.answered_by = tbl_usrs.ID'],
+				where: (where.length > 0) ? [_.chain(where).map((o) => (o[0])).join(' AND ').value(), _.flatMap(where, (o) => (o[1]))] : null,
+				orderBy: ['answered_date DESC'],
+			}, _.isNil);
+			let selected	= ['status_answer', 'answered_date', 'tbl_usrs.usr_display_name', 'tbl_questions.question_text', 'tbl_questions.response_1', 'tbl_questions.response_2', 'tbl_questions.response_3', 'tbl_questions.response_4', 'tbl_questions.correct_response'];
+
+			answer.findAll(selected, query, {limit, offset}, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
