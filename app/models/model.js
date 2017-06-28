@@ -108,6 +108,13 @@ class Model {
 		});
 	}
 
+	raw(query, callback) {
+		db.get().query(query, [this.tableName], (err, result) => {
+			if (err) { return callback(globalError(err.code)); }
+
+			callback(null, result);
+		});
+	}
 }
 
 module.exports = Model;
