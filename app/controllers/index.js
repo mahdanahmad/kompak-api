@@ -25,7 +25,7 @@ module.exports.statistic = (callback) => {
 			let location	= ['province', 'regency', 'district', 'village'];
 			let gender		= ['m', 'f'];
 			let ageStep		= [15, 45, 5];
-			let age			= _.chain((ageStep[1] - ageStep[0]) / ageStep[2]).times((o) => { let minAge = o * ageStep[2] + ageStep[0]; return [minAge, minAge + ageStep[2]]; }).concat(_.dropRight(ageStep)).value();
+			let age			= _.chain((ageStep[1] - ageStep[0]) / ageStep[2]).times((o) => { let minAge = o * ageStep[2] + ageStep[0]; return [minAge, minAge + ageStep[2]]; }).unshift(ageStep[0]).push(ageStep[1]).value();
 
 			let total		= 'COUNT(*) as total';
 			let countLoc	= _.chain(location).map((o) => ('COUNT(DISTINCT usr_' + o + ') as ' + o + '')).join(', ').value();
@@ -38,7 +38,7 @@ module.exports.statistic = (callback) => {
 			user.raw('SELECT ' + selected + ' FROM ??', (err, result) => flowCallback(err, {
 				gender: _.pick(result[0], gender),
 				status: _.pick(result[0], _.concat(location, 'total', 'login')),
-				age: _.pick(result[0], _.map(age, (o) => (_.isArray(o) ? o.join(' - ') : (o == ageStep[0] ? '< ' + o : o + ' >=' ))))
+				age: [{ key: 'Age Distribution', values: _.chain(result[0]).pick(_.map(age, (o) => (_.isArray(o) ? o.join(' - ') : (o == ageStep[0] ? '< ' + o : o + ' >=' )))).map((jumlah, label) => ({ label, jumlah })).value() }]
 			}));
 		},
 		(data, flowCallback) => {
@@ -65,7 +65,7 @@ module.exports.statistic = (callback) => {
 			async.parallel({
 				institution: (callback) => { user.raw('SELECT tbl_institution.name_institution, countInstitution.jumlah FROM (SELECT usr_institution, count(*) as jumlah FROM ?? GROUP BY usr_institution) as countInstitution RIGHT JOIN tbl_institution ON countInstitution.usr_institution = tbl_institution.id', (err, result) => callback(err, _.map(result, (o) => ({ name: o.name_institution, jumlah: (o.jumlah || 0) })))); },
 				education: (callback) => { user.raw('SELECT tbl_education.education, countEducation.jumlah FROM (SELECT usr_education, count(*) as jumlah FROM ?? GROUP BY usr_education) as countEducation RIGHT JOIN tbl_education ON countEducation.usr_education = tbl_education.id', (err, result) => callback(err, _.map(result, (o) => ({ name: o.education, jumlah: (o.jumlah || 0) })))); },
-				designation: (callback) => { user.raw('SELECT usr_designation, COUNT(*) as jumlah FROM ?? GROUP BY usr_designation ORDER BY jumlah DESC LIMIT 0,8', (err, result) => callback(err, result)); },
+				designation: (callback) => { user.raw('SELECT usr_designation, COUNT(*) as jumlah FROM ?? GROUP BY usr_designation ORDER BY jumlah DESC LIMIT 0,8', (err, result) => callback(err, _.map(result, (o) => ({ name: o.usr_designation, jumlah: (o.jumlah || 0) })))); },
 			}, (err, results) => flowCallback(err, _.assign(data, results)));
 		},
 		(data, flowCallback) => {
