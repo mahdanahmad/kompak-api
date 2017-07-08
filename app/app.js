@@ -26,7 +26,7 @@ if (process.env.APP_ENV === 'local') {
 app.use(express.static(path.join(__dirname, '/public')));
 app.use('/', require('./routes/index'));
 
-const routeList		= ['badge', 'education', 'institution', 'setting', 'province', 'regency', 'district', 'village', 'location', 'user', 'category', 'question', 'answer', 'essay', 'essayAnswer'];
+const routeList		= ['badge', 'education', 'institution', 'setting', 'province', 'regency', 'district', 'village', 'location', 'user', 'category', 'question', 'answer', 'essay', 'essayAnswer', 'admin'];
 routeList.forEach((o) => { app.use('/' + o, require('./routes/' + o)); });
 
 // catch 404 and forward to error handler
