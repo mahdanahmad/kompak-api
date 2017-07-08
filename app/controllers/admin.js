@@ -51,7 +51,7 @@ module.exports.store = (input, callback) => {
 	async.waterfall([
 		(flowCallback) => {
 			let ascertain	= {};
-			if (!_.isNil(input.password) && !_.isEmpty(input.password)) { ascertain.password = hash(input.password); }
+			if (!_.isNil(input.password) && !_.isEmpty(input.password)) { ascertain.password = hash(input.password).toString(); }
 			admin.insertOne(_.assign(input, ascertain), (err, result) =>{
 				if (err) { return flowCallback(err); }
 

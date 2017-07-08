@@ -1,8 +1,10 @@
 const _				= require('lodash');
 const moment		= require('moment');
 const async			= require('async');
+const hash 			= require('crypto-js/sha256');
 
 const user  		= require('../models/user');
+const admin  		= require('../models/admin');
 const essay  		= require('../models/essay');
 const answer  		= require('../models/answer');
 const province		= require('../models/province');
@@ -87,3 +89,41 @@ module.exports.statistic = (callback) => {
 		callback({ response, status_code, message, result });
 	});
 };
+
+module.exports.auth	= (input, callback) => {
+	let response		= 'OK';
+	let status_code     = 200;
+	let message         = 'User login success.';
+	let result          = null;
+
+	async.waterfall([
+		(flowCallback) => {
+			const missing   = _.difference(['username', 'password'], _.chain(input).pickBy((o) => (!_.isEmpty(o))).keys().value());
+			if (_.isEmpty(missing)) {
+				flowCallback(null);
+			} else {
+				flowCallback('Missing required field(s) : {' + missing.join(', ') + '}.');
+			}
+		},
+		(flowCallback) => {
+			admin.findOne({ where: ['username = ? AND password = ?', [input.username, hash(input.password).toString()]] }, (err, result) => {
+				if (err) { return flowCallback(err); }
+				if (_.isNil(result)) { return flowCallback('username dan password yang anda masukkan tidak cocok.'); }
+
+				let returned = _.pick(result, ['id', 'role']);
+				returned.role = JSON.parse(returned.role);
+
+				flowCallback(null, returned);
+			});
+		},
+	], (err, asyncResult) => {
+		if (err) {
+			response    = 'FAILED';
+			status_code = 400;
+			message     = err;
+		} else {
+			result      = asyncResult;
+		}
+		callback({ response, status_code, message, result });
+	});
+}

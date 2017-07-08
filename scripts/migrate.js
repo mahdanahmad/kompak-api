@@ -11,7 +11,7 @@ const nme_admins	= 'tbl_admins';
 const def_admin		= {
 	name		: 'Admin Gapura Desa',
 	username	: 'gapuradesa',
-	password	: hash(hash('ketikaja')),
+	password	: hash(hash('ketikaja').toString()).toString(),
 	email		: 'admin@gapura-desa.id',
 	role		: JSON.stringify([]),
 }
