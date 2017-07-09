@@ -99,6 +99,6 @@ module.exports.update = (input, callback) => {
  * @param  	int	$id
  * @return	Response
  */
-module.exports.destroy = (id, callback) => {
+module.exports.destroy = (id, input, callback) => {
 	//
 };

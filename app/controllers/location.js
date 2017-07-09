@@ -246,7 +246,7 @@ module.exports.update = (args, input, callback) => {
  * @param  	int	$id
  * @return	Response
  */
-module.exports.destroy = (args, callback) => {
+module.exports.destroy = (args, input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
 	let message         = 'Remove location success.';
@@ -267,7 +267,7 @@ module.exports.destroy = (args, callback) => {
 					default: return flowCallback('No data can be deleted in this point.');
 				}
 
-				collection.delete(id, (err, result) => (flowCallback(err, result)));
+				collection.delete(id, input, (err, result) => (flowCallback(err, result)));
 			});
 		},
 	], (err, asyncResult) => {

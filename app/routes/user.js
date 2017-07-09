@@ -16,7 +16,7 @@ router.put('/:id', (req, res, next) => {
 	controller.update(req.params.id, req.body, (result) => { res.status(result.status_code).json(result); });
 });
 router.delete('/:id', (req, res, next) => {
-	controller.destroy(req.params.id, (result) => { res.status(result.status_code).json(result); });
+	controller.destroy(req.params.id, req.body, (result) => { res.status(result.status_code).json(result); });
 });
 
 module.exports = router;

@@ -3,6 +3,7 @@ const moment		= require('moment');
 const async			= require('async');
 const hash 			= require('crypto-js/sha256');
 
+const logs  		= require('../models/logs');
 const user  		= require('../models/user');
 const admin  		= require('../models/admin');
 const essay  		= require('../models/essay');
@@ -127,3 +128,52 @@ module.exports.auth	= (input, callback) => {
 		callback({ response, status_code, message, result });
 	});
 }
+
+module.exports.logs	= (input, callback) => {
+	let response		= 'OK';
+	let status_code     = 200;
+	let message         = 'Get logs success.';
+	let result          = null;
+
+	const limit			= !_.isNil(input.limit)		? _.toInteger(input.limit)	: 0;
+	const offset		= !_.isNil(input.offset)	? _.toInteger(input.offset)	: 0;
+
+	async.waterfall([
+		(flowCallback) => {
+			let like		= !_.isNil(input.like) ? ['name LIKE ?', '%' + input.like + '%'] : null;
+			let state		= !_.isNil(input.state) ? ['state = ?', input.state] : null;
+			let where		= _.compact([like, state])
+
+			let query		= _.omitBy({
+				leftJoin: ['tbl_admins ON tbl_logs.defendant = tbl_admins.id'],
+				where: (where.length > 0) ? [_.chain(where).map((o) => (o[0])).join(' AND ').value(), _.flatMap(where, (o) => (o[1]))] : null,
+				orderBy: ['recording_date DESC']
+			}, _.isNil);
+			let selected	= ['tbl_admins.name', 'state', 'affected_table', 'recording_date'];
+
+			logs.findAll(selected, query, {limit, offset}, (err, result) => flowCallback(err, result));
+		},
+		(rawData, flowCallback) => {
+			async.map(rawData, (o, next) => {
+				let text	= "";
+				switch (o.state) {
+					case 'DELETE': text = "menghapus sebuah data pada table <strong>" + o.affected_table + "</strong>"; break;
+					case 'UPDATE': text = "megubah sebuah data pada table <strong>" + o.affected_table + "</strong>"; break;
+					case 'INSERT': text = "menambahkan sebuah data pada table <strong>" + o.affected_table + "</strong>"; break;
+					default: text	= "unknown logs."
+				}
+
+				next(null, { defendant: o.name, state: o.state, recording_date: o.recording_date, text });
+			}, (err, result) => flowCallback(err, result));
+		}
+	], (err, asyncResult) => {
+		if (err) {
+			response    = 'FAILED';
+			status_code = 400;
+			message     = err;
+		} else {
+			result      = asyncResult;
+		}
+		callback({ response, status_code, message, result });
+	});
+};

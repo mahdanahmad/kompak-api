@@ -13,7 +13,7 @@ router.put('/:province?/:regency?/:district?/:village?', (req, res, next) => {
 	controller.update([req.params.province, req.params.regency, req.params.district, req.params.village], req.body, (result) => { res.status(result.status_code).json(result); });
 });
 router.delete('/:province?/:regency?/:district?/:village?', (req, res, next) => {
-	controller.destroy([req.params.province, req.params.regency, req.params.district, req.params.village], (result) => { res.status(result.status_code).json(result); });
+	controller.destroy([req.params.province, req.params.regency, req.params.district, req.params.village], req.body, (result) => { res.status(result.status_code).json(result); });
 });
 
 module.exports = router;

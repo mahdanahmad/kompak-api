@@ -158,7 +158,7 @@ module.exports.update = (id, input, callback) => {
  * @param  	int	$id
  * @return	Response
  */
-module.exports.destroy = (id, callback) => {
+module.exports.destroy = (id, input, callback) => {
 	let response        = 'OK';
 	let status_code     = 200;
 	let message         = 'Remove question with id ' + id + ' success.';
@@ -166,7 +166,7 @@ module.exports.destroy = (id, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			question.delete(id, (err, result) => {
+			question.delete(id, input, (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, null);

@@ -1,6 +1,8 @@
-const db	= require('../connection');
-const async	= require('async');
-const _		= require('lodash');
+const db		= require('../connection');
+const async		= require('async');
+const _			= require('lodash');
+
+const globalMsg	= require('../helpers/messages');
 
 const globalError	= (errcode) => {
 	switch (errcode) {
@@ -9,6 +11,19 @@ const globalError	= (errcode) => {
 		case 'ER_ROW_IS_REFERENCED_2': return 'Primary key(s) in this table still used as referrence. Please delete those data first.';
 		default: return errcode;
 	}
+}
+
+const writeLog	= (state, defendant, affected_table, affected_id, prev_value, additional_info, callback) => {
+	db.get().query('SELECT id from tbl_admins WHERE id = ?', defendant, (err, result) => {
+		if (err) { return callback(globalError(err.code)); }
+		if (_.isEmpty(result)) { return callback(globalMsg.noaccess); }
+
+		db.get().query('INSERT INTO tbl_logs SET ?', { state, defendant, affected_table, affected_id, prev_value, additional_info, recording_date: new Date() }, (err, result) => {
+			if (err) { return callback(globalError(err.code)); }
+
+			callback();
+		});
+	});
 }
 
 class Model {
@@ -22,11 +37,23 @@ class Model {
 	}
 
 	insertOne(data, callback) {
+		if (_.isNil(data.defendant)) { return callback(globalMsg.noaccess); }
+
 		const missing   = _.difference(this.required, _.chain(data).pickBy((o) => (!_.isEmpty(o) || _.isDate(o))).keys().value());
 		if (missing.length === 0) {
 			db.get().query('INSERT INTO ' + this.tableName + ' SET ?', _.pick(data, this.fillable), (err, result) => {
 				if (err) { return callback(globalError(err.code)); }
-				callback(null, { id: result.insertId })
+
+				writeLog('INSERT', data.defendant, this.tableName, result.insertId, null, null, (errWrite) => {
+					if (errWrite) {
+						db.get().query('DELETE FROM ?? where ' + this.tableId + ' = ?', [this.tableName, result.insertId], (err, result) => {
+							if (err) { return callback(globalError(err.code)); }
+							callback(errWrite);
+						});
+					};
+
+					callback(null, { id: result.insertId })
+				});
 			});
 		} else {
 			callback('Missing required field(s) : {' + missing.join(', ') + '}.');
@@ -79,16 +106,22 @@ class Model {
 	}
 
 	update(id, update, callback) {
-		db.get().query('SELECT ?? FROM ?? WHERE ' + this.tableId + ' = ?', [this.tableId, this.tableName, id], (err, result) => {
+		db.get().query('SELECT * FROM ?? WHERE ' + this.tableId + ' = ?', [this.tableName, id], (err, result) => {
 			if (err) { return callback(globalError(err.code)); }
 			if (_.isEmpty(result)) { return callback(this.tableName + ' with id ' + id + ' not found.'); }
+
+			if (_.isNil(update.defendant)) { return callback(globalMsg.noaccess); }
 
 			// let cherry    = _.pickBy(update, (o, key) => (_.chain(this.fillable).difference(this.preserved).includes(key).value() && (!_.isEmpty(o) || _.isDate(o))));
 			let cherry    = _.pickBy(update, (o, key) => (_.chain(this.fillable).difference(this.preserved).includes(key).value()));
 			if (!_.isEmpty(cherry)) {
-				db.get().query('UPDATE ?? SET ' + _.map(cherry, (o, key) => (key + ' = ?')).join(',') + ' WHERE ' + this.tableId + ' = ?', [this.tableName, ..._.values(cherry), id], (err, result) => {
-					if (err) { return callback(globalError(err.code)); }
-					callback(null, _.keys(cherry));
+				writeLog('UPDATE', update.defendant, this.tableName, id, JSON.stringify(result), null, (err) => {
+					if (err) { return callback(err); }
+
+					db.get().query('UPDATE ?? SET ' + _.map(cherry, (o, key) => (key + ' = ?')).join(',') + ' WHERE ' + this.tableId + ' = ?', [this.tableName, ..._.values(cherry), id], (err, result) => {
+						if (err) { return callback(globalError(err.code)); }
+						callback(null, _.keys(cherry));
+					});
 				});
 			} else {
 				callback(null, []);
@@ -96,14 +129,19 @@ class Model {
 		});
 	}
 
-	delete(id, callback) {
-		db.get().query('SELECT ?? FROM ?? WHERE ' + this.tableId + ' = ?', [this.tableId, this.tableName, id], (err, result) => {
+	delete(id, data, callback) {
+		db.get().query('SELECT * FROM ?? WHERE ' + this.tableId + ' = ?', [this.tableName, id], (err, result) => {
 			if (err) { return callback(globalError(err.code)); }
 			if (_.isEmpty(result)) { return callback(this.tableName + ' with id ' + id + ' not found.'); }
 
-			db.get().query('DELETE FROM ?? where ' + this.tableId + ' = ?', [this.tableName, id], (err, result) => {
-				if (err) { return callback(globalError(err.code)); }
-				callback(null, result.value);
+			if (_.isNil(data.defendant)) { return callback(globalMsg.noaccess); }
+			writeLog('DELETE', data.defendant, this.tableName, id, JSON.stringify(result), null, (err) => {
+				if (err) { return callback(err); }
+
+				db.get().query('DELETE FROM ?? where ' + this.tableId + ' = ?', [this.tableName, id], (err, result) => {
+					if (err) { return callback(globalError(err.code)); }
+					callback(null, result.value);
+				});
 			});
 		});
 	}
