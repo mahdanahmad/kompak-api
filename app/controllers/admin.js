@@ -22,7 +22,10 @@ module.exports.index = (input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			admin.findAll({limit, offset}, (err, result) => flowCallback(err, _.map(result, (o) => (_.omit(o, ['role'])))));
+			let query	= _.omitBy({
+				where: !_.isNil(input.like) ? ['name LIKE ?', ['%' + input.like + '%']] : null,
+			}, _.isNil);
+			admin.findAll(query, {limit, offset}, (err, result) => flowCallback(err, _.map(result, (o) => (_.assign(o, { role: JSON.parse(o.role) })))));
 		}
 	], (err, asyncResult) => {
 		if (err) {
@@ -88,7 +91,7 @@ module.exports.show = (id, callback) => {
 				if (err) { return flowCallback(err); }
 				if (_.isNil(result)) { return flowCallback('User with id ' + id + ' not found.'); }
 
-				flowCallback(null, result);
+				flowCallback(null, _.assign(result, { role: JSON.parse(result.role) }));
 			});
 		},
 	], (err, asyncResult) => {
@@ -118,7 +121,9 @@ module.exports.update = (id, input, callback) => {
 
 	async.waterfall([
 		(flowCallback) => {
-			admin.update(id, input, (err, result) => {
+			let ascertain	= {};
+			if (!_.isNil(input.password) && !_.isEmpty(input.password)) { ascertain.password = hash(input.password).toString(); }
+			admin.update(id, _.assign(input, ascertain), (err, result) => {
 				if (err) { return flowCallback(err); }
 
 				flowCallback(null, result);
