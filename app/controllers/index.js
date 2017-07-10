@@ -29,11 +29,12 @@ module.exports.statistic = (callback) => {
 			let gender		= ['m', 'f'];
 			let ageStep		= [15, 45, 5];
 			let age			= _.chain((ageStep[1] - ageStep[0]) / ageStep[2]).times((o) => { let minAge = o * ageStep[2] + ageStep[0]; return [minAge, minAge + ageStep[2]]; }).unshift(ageStep[0]).push(ageStep[1]).value();
+			let years		= _.map(age, (o) => (_.isArray(o) ? _.map(o, (d) => (moment().subtract(d, 'years').format("YYYY"))): moment().subtract(o, 'years').format("YYYY")));
 
 			let total		= 'COUNT(*) as total';
 			let countLoc	= _.chain(location).map((o) => ('COUNT(DISTINCT usr_' + o + ') as ' + o + '')).join(', ').value();
 			let countGender	= _.chain(gender).map((o) => ('SUM(if(usr_gender = \'' + o + '\', 1, 0)) as ' + o)).join(', ').value();
-			let countAge	= _.chain(age).map((o) => ('SUM(if(' + (_.isArray(o) ? ('usr_years >= ' + o[0] + ' AND usr_years < ' + o[1]) : (o == ageStep[0] ? 'usr_years < ' + o : 'usr_years >=' + o)) + ', 1, 0)) as \'' + (_.isArray(o) ? o.join(' - ') : (o == ageStep[0] ? '< ' + o : o + ' >=' )) + '\'')).join().value();
+			let countAge	= _.chain(years).map((o, key) => ('SUM(if(' + (_.isArray(o) ? ('usr_year_born <= ' + o[0] + ' AND usr_year_born > ' + o[1]) : (age[key] == ageStep[0] ? 'usr_year_born > ' + o : 'usr_year_born <=' + o)) + ', 1, 0)) as \'' + (_.isArray(age[key]) ? age[key].join(' - ') : (age[key] == ageStep[0] ? '< ' + age[key] : age[key] + ' >=' )) + '\'')).join().value();
 			let countLogin	= 'SUM(if(last_logged_in >= \'' + dateLimit + '\', 1, 0)) as login';
 
 			let selected	= [total, countLoc, countGender, countAge, countLogin].join(', ');

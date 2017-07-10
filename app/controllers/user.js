@@ -26,7 +26,7 @@ module.exports.index = (input, callback) => {
 				where: !_.isNil(input.like) ? ['usr_display_name LIKE ?', ['%' + input.like + '%']] : null,
 				orderBy: !_.isNil(input.orderby) ? [input.orderby]	: null
 			}, _.isNil);
-			let selected	= ['usr_email', 'usr_display_name', 'usr_designation', 'usr_gender', 'tbl_villages.name_desa', 'usr_years', 'usr_contribution', 'usr_score', 'tbl_institution.name_institution'];
+			let selected	= ['usr_email', 'usr_display_name', 'usr_designation', 'usr_gender', 'tbl_villages.name_desa', 'usr_year_born', 'usr_contribution', 'usr_score', 'tbl_institution.name_institution'];
 
 			user.findAll(selected, query, {limit, offset}, (err, result) => flowCallback(err, result));
 		}
