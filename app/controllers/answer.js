@@ -30,7 +30,7 @@ module.exports.index = (input, callback) => {
 				where: (where.length > 0) ? [_.chain(where).map((o) => (o[0])).join(' AND ').value(), _.flatMap(where, (o) => (o[1]))] : null,
 				orderBy: ['answered_date DESC'],
 			}, _.isNil);
-			let selected	= ['status_answer', 'answered_date', 'tbl_usrs.usr_display_name', 'tbl_questions.question_text', 'tbl_questions.response_1', 'tbl_questions.response_2', 'tbl_questions.response_3', 'tbl_questions.response_4', 'tbl_questions.correct_response'];
+			let selected	= ['status_answer', 'answered_date', 'tbl_usrs.usr_display_name', 'tbl_questions.question_text'];
 
 			answer.findAll(selected, query, {limit, offset}, (err, result) => {
 				if (err) { return flowCallback(err); }
