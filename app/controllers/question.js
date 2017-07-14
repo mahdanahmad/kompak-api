@@ -28,7 +28,7 @@ module.exports.index = (input, callback) => {
 			let query	= _.omitBy({
 				leftJoin: ['tbl_questions_categories ON tbl_questions.question_category = tbl_questions_categories.ID_category LEFT JOIN tbl_usrs ON tbl_questions.usr_id = tbl_usrs.ID'],
 				where: (where.length > 0) ? [_.chain(where).map((o) => (o[0])).join(' AND ').value(), _.flatMap(where, (o) => (o[1]))] : null,
-				orderBy: ['question_enabled'],
+				orderBy: ['status, question_enabled'],
 			}, _.isNil);
 			let selected	= ['question_text', 'response_1', 'response_2', 'response_3', 'response_4', 'question_enabled', 'ID_category', 'correct_response', 'status', 'tbl_questions_categories.category_name', 'tbl_usrs.usr_display_name'];
 
