@@ -146,6 +146,21 @@ class Model {
 		});
 	}
 
+	count(...args) {
+		let query = null, callback = null;
+
+		switch (args.length) {
+			case 1: [callback] = args; break;
+			case 2: [query, callback] = args; break;
+			default: callback = _.last(args);
+		}
+
+		db.get().query('SELECT COUNT(*) as jumlah FROM ??' + (!_.isNil(query) ? ' ' + query : ''), [this.tableName], (err, result) => {
+			if (err) { return callback(globalError(err.code)); }
+			callback(null, result[0].jumlah);
+		});
+	}
+
 	raw(query, callback) {
 		db.get().query(query, [this.tableName], (err, result) => {
 			if (err) { return callback(globalError(err.code)); }

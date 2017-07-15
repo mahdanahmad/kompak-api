@@ -1,5 +1,6 @@
 const _				= require('lodash');
 const async			= require('async');
+const moment		= require('moment');
 
 const user  		= require('../models/user');
 
@@ -19,11 +20,15 @@ module.exports.index = (input, callback) => {
 	const limit			= !_.isNil(input.limit)		? _.toInteger(input.limit)	: 0;
 	const offset		= !_.isNil(input.offset)	? _.toInteger(input.offset)	: 0;
 
+	const dateFormat	= 'YYYY-MM-DD HH:mm:ss';
+	const startDate		= !_.isNil(input.startdate)	? moment(input.startdate).format(dateFormat)	: moment().year(2017).startOf('year').format(dateFormat);
+	const endDate		= !_.isNil(input.enddate)	? moment(input.enddate).format(dateFormat)		: moment().format(dateFormat);
+
 	async.waterfall([
 		(flowCallback) => {
 			let query		= _.omitBy({
 				leftJoin: ['tbl_villages ON tbl_usrs.usr_village = tbl_villages.id LEFT JOIN tbl_institution ON tbl_usrs.usr_institution = tbl_institution.id'],
-				where: !_.isNil(input.like) ? ['usr_display_name LIKE ?', ['%' + input.like + '%']] : null,
+				where: ['last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\'' + (!_.isNil(input.like) ? ' AND usr_display_name LIKE ?' : ''), (!_.isNil(input.like) ? ['%' + input.like + '%'] : [])],
 				orderBy: !_.isNil(input.orderby) ? [input.orderby]	: null
 			}, _.isNil);
 			let selected	= ['usr_email', 'usr_display_name', 'usr_designation', 'usr_gender', 'tbl_villages.name_desa', 'usr_year_born', 'usr_contribution', 'usr_score', 'tbl_institution.name_institution'];

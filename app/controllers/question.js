@@ -1,5 +1,6 @@
 const _				= require('lodash');
 const async			= require('async');
+const moment		= require('moment');
 
 const question		= require('../models/question');
 
@@ -19,15 +20,20 @@ module.exports.index = (input, callback) => {
 	const limit			= !_.isNil(input.limit)		? _.toInteger(input.limit)	: 0;
 	const offset		= !_.isNil(input.offset)	? _.toInteger(input.offset)	: 0;
 
+	const dateFormat	= 'YYYY-MM-DD HH:mm:ss';
+	const startDate		= !_.isNil(input.startdate)	? moment(input.startdate).format(dateFormat)	: moment().year(2017).startOf('year').format(dateFormat);
+	const endDate		= !_.isNil(input.enddate)	? moment(input.enddate).format(dateFormat)		: moment().format(dateFormat);
+
 	async.waterfall([
 		(flowCallback) => {
 			let like		= !_.isNil(input.like) ? ['question_text LIKE ?', '%' + input.like + '%'] : null;
 			let category	= !_.isNil(input.category) ? ['question_category = ?', input.category] : null;
 			let where		= _.compact([like, category])
+			let whereQuery	= (where.length > 0) ? [_.chain(where).map((o) => (o[0])).join(' AND ').value(), _.flatMap(where, (o) => (o[1]))] : null;
 
 			let query	= _.omitBy({
 				leftJoin: ['tbl_questions_categories ON tbl_questions.question_category = tbl_questions_categories.ID_category LEFT JOIN tbl_usrs ON tbl_questions.usr_id = tbl_usrs.ID'],
-				where: (where.length > 0) ? [_.chain(where).map((o) => (o[0])).join(' AND ').value(), _.flatMap(where, (o) => (o[1]))] : null,
+				where: ['submitted_date >= \'' + startDate + '\' AND submitted_date < \'' + endDate + '\'' + (!_.isNil(whereQuery) ? ' AND ' + whereQuery[0] : ''), (!_.isNil(whereQuery) ? whereQuery[1] : [])],
 				orderBy: ['status, question_enabled'],
 			}, _.isNil);
 			let selected	= ['question_text', 'response_1', 'response_2', 'response_3', 'response_4', 'question_enabled', 'ID_category', 'correct_response', 'status', 'tbl_questions_categories.category_name', 'tbl_usrs.usr_display_name'];

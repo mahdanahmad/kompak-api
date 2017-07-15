@@ -7,7 +7,7 @@ const router		= express.Router();
 router.get('/', (req, res, next) => { res.json(); });
 
 router.get('/statistic', (req, res, next) => {
-	controller.statistic((result) => { res.status(result.status_code).json(result); });
+	controller.statistic(req.query, (result) => { res.status(result.status_code).json(result); });
 });
 
 router.post('/auth', (req, res, next) => {

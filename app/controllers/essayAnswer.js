@@ -1,5 +1,6 @@
 const _				= require('lodash');
 const async			= require('async');
+const moment		= require('moment');
 
 const essayAnswer	= require('../models/essayAnswer');
 
@@ -19,15 +20,20 @@ module.exports.index = (input, callback) => {
 	const limit			= !_.isNil(input.limit)		? _.toInteger(input.limit)	: 0;
 	const offset		= !_.isNil(input.offset)	? _.toInteger(input.offset)	: 0;
 
+	const dateFormat	= 'YYYY-MM-DD HH:mm:ss';
+	const startDate		= !_.isNil(input.startdate)	? moment(input.startdate).format(dateFormat)	: moment().year(2017).startOf('year').format(dateFormat);
+	const endDate		= !_.isNil(input.enddate)	? moment(input.enddate).format(dateFormat)		: moment().format(dateFormat);
+
 	async.waterfall([
 		(flowCallback) => {
 			let like		= !_.isNil(input.like) ? ['tbl_usrs.usr_display_name LIKE ?', '%' + input.like + '%'] : null;
 			let category	= !_.isNil(input.category) ? ['tbl_essai.ID_category = ?', input.category] : null;
-			let where		= _.compact([like, category])
+			let where		= _.compact([like, category]);
+			let whereQuery	= (where.length > 0) ? [_.chain(where).map((o) => (o[0])).join(' AND ').value(), _.flatMap(where, (o) => (o[1]))] : null;
 
 			let query	= _.omitBy({
 				leftJoin: ['tbl_essai ON tbl_essai_answers.id_essai_question = tbl_essai.id LEFT JOIN tbl_usrs ON tbl_essai_answers.usr_id = tbl_usrs.ID'],
-				where: (where.length > 0) ? [_.chain(where).map((o) => (o[0])).join(' AND ').value(), _.flatMap(where, (o) => (o[1]))] : null,
+				where: ['tbl_essai_answers.submitted_date >= \'' + startDate + '\' AND tbl_essai_answers.submitted_date < \'' + endDate + '\'' + (!_.isNil(whereQuery) ? ' AND ' + whereQuery[0] : ''), (!_.isNil(whereQuery) ? whereQuery[1] : [])],
 				orderBy: ['submitted_date DESC'],
 			}, _.isNil);
 			let selected	= ['answer', 'tbl_essai_answers.submitted_date', 'tbl_usrs.usr_display_name', 'tbl_essai.question'];
