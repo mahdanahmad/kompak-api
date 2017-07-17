@@ -187,3 +187,71 @@ module.exports.logs	= (input, callback) => {
 		callback({ response, status_code, message, result });
 	});
 };
+
+
+module.exports.list = (input, callback) => {
+	let response		= 'OK';
+	let status_code     = 200;
+	let message         = 'Get list success.';
+	let result          = null;
+
+	let topLimit		= 10;
+
+	const dateFormat	= 'YYYY-MM-DD HH:mm:ss';
+	const startDate		= !_.isNil(input.startdate)	? moment(input.startdate).format(dateFormat)	: moment().year(2017).startOf('year').format(dateFormat);
+	const endDate		= !_.isNil(input.enddate)	? moment(input.enddate).format(dateFormat)		: moment().format(dateFormat);
+
+	async.waterfall([
+		(flowCallback) => {
+			switch (input.state) {
+				case 'total':
+					user.findAll(['usr_display_name'], { orderBy: ['usr_display_name'] }, {}, (err, result) => (flowCallback(err, _.map(result, 'usr_display_name'))));
+					break;
+				case 'login':
+					user.findAll(['usr_display_name'], { where: ['last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\''], orderBy: ['usr_display_name'] }, {}, (err, result) => (flowCallback(err, _.map(result, 'usr_display_name'))));
+					break;
+				case 'male':
+					user.findAll(['usr_display_name'], { where: ['usr_gender = ? AND last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\'', ['m']], orderBy: ['usr_display_name'] }, {}, (err, result) => (flowCallback(err, _.map(result, 'usr_display_name'))));
+					break;
+				case 'female':
+					user.findAll(['usr_display_name'], { where: ['usr_gender = ? AND last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\'', ['f']], orderBy: ['usr_display_name'] }, {}, (err, result) => (flowCallback(err, _.map(result, 'usr_display_name'))));
+					break;
+				case 'pertanyaan':
+					question.raw('SELECT usr_display_name, jumlah FROM (SELECT usr_id, COUNT(*) as jumlah FROM ?? WHERE submitted_date >= \'' + startDate + '\' AND submitted_date < \'' + endDate + '\' GROUP BY usr_id) as question LEFT JOIN tbl_usrs ON tbl_usrs.ID = question.usr_id ORDER BY jumlah DESC, usr_display_name', (err, result) => (flowCallback(err, _.map(result, (o) => (o.usr_display_name + ': ' + o.jumlah)))));
+					break;
+				case 'jawaban':
+					answer.raw('SELECT usr_display_name, jumlah FROM (SELECT answered_by, COUNT(*) as jumlah FROM ?? WHERE answered_date >= \'' + startDate + '\' AND answered_date < \'' + endDate + '\' GROUP BY answered_by) as answer LEFT JOIN tbl_usrs ON tbl_usrs.ID = answer.answered_by', (err, choicesResult) => {
+						if (err) { return flowCallback(err); }
+						essayAnswer.raw('SELECT usr_display_name, jumlah FROM (SELECT usr_id, COUNT(*) as jumlah FROM ?? WHERE submitted_date >= \'' + startDate + '\' AND submitted_date < \'' + endDate + '\' GROUP BY usr_id) as answer LEFT JOIN tbl_usrs ON tbl_usrs.ID = answer.usr_id', (err, essayResult) => {
+							if (err) { return flowCallback(err); }
+
+							flowCallback(null, _.chain(choicesResult).concat(essayResult).groupBy('usr_display_name').map((o, key) => ({usr_display_name: key, jumlah: _.sumBy(o, 'jumlah')})).orderBy(['jumlah', 'usr_display_name'], ['desc', 'asc']).map((o) => (o.usr_display_name + ': ' + o.jumlah)).value());
+						});
+					});
+					break;
+				case 'province':
+					user.raw('SELECT name_prov FROM (SELECT usr_province FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_province) as location LEFT JOIN tbl_provinces ON tbl_provinces.id = location.usr_province ORDER BY name_prov', (err, result) => (flowCallback(err, _.map(result, 'name_prov'))));
+					break;
+				case 'regency':
+					user.raw('SELECT name_kab FROM (SELECT usr_regency FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_regency) as location LEFT JOIN tbl_regencies ON tbl_regencies.id = location.usr_regency ORDER BY name_kab', (err, result) => (flowCallback(err, _.map(result, 'name_kab'))));
+					break;
+				case 'district':
+					user.raw('SELECT name_kec FROM (SELECT usr_district FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_district) as location LEFT JOIN tbl_districts ON tbl_districts.id = location.usr_district ORDER BY name_kec', (err, result) => (flowCallback(err, _.map(result, 'name_kec'))));
+					break;
+				case 'village':
+					user.raw('SELECT name_desa FROM (SELECT usr_village FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_village) as location LEFT JOIN tbl_villages ON tbl_villages.id = location.usr_village ORDER BY name_desa', (err, result) => (flowCallback(err, _.map(result, 'name_desa'))));
+					break;
+				default: return flowCallback(null, []);
+			}
+		},
+	], (err, asyncResult) => {
+		if (err) {
+			response    = 'FAILED';
+			status_code = 400;
+			message     = err;
+		} else {
+			result      = asyncResult;
+		}
+		callback({ response, status_code, message, result });
+	});
+};

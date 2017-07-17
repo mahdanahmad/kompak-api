@@ -18,4 +18,8 @@ router.get('/logs', (req, res, next) => {
 	controller.logs(req.query, (result) => { res.status(result.status_code).json(result); });
 });
 
+router.get('/list', (req, res, next) => {
+	controller.list(req.query, (result) => { res.status(result.status_code).json(result); });
+});
+
 module.exports = router;
