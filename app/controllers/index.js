@@ -70,15 +70,15 @@ module.exports.statistic = (input, callback) => {
 			async.parallel({
 				topscore: (callback) => { answer.raw('SELECT topscore.jumlah, tbl_usrs.usr_display_name FROM (SELECT answered_by, COUNT(*) as jumlah FROM ?? WHERE status_answer = 1 AND answered_date >= \'' + startDate + '\' AND answered_date < \'' + endDate + '\' GROUP BY answered_by LIMIT 0, ' + topLimit + ') as topscore LEFT JOIN tbl_usrs ON topscore.answered_by = tbl_usrs.ID ORDER BY jumlah DESC', (err, result) => callback(err, result)); },
 				topcontribution: (callback) => { question.raw('SELECT contributors.jumlah, tbl_usrs.usr_display_name FROM (SELECT usr_id, COUNT(*) as jumlah FROM ?? WHERE submitted_date >= \'' + startDate + '\' AND submitted_date < \'' + endDate + '\' GROUP BY usr_id LIMIT 0, ' + topLimit + ') as contributors LEFT JOIN tbl_usrs ON contributors.usr_id = tbl_usrs.ID ORDER BY jumlah DESC', (err, result) => callback(err, result)); },
-				topvillage: (callback) => { user.raw('SELECT tbl_villages.name_desa, topVillage.jumlah FROM (SELECT usr_village, COUNT(*) as jumlah FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_village ORDER BY jumlah DESC LIMIT 0, ' + topLimit + ') as topVillage LEFT JOIN tbl_villages ON topVillage.usr_village = tbl_villages.id', (err, result) => callback(err, result)); },
+				topvillage: (callback) => { user.raw('SELECT tbl_villages.id, tbl_villages.name_desa, topVillage.jumlah FROM (SELECT usr_village, COUNT(*) as jumlah FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_village ORDER BY jumlah DESC LIMIT 0, ' + topLimit + ') as topVillage LEFT JOIN tbl_villages ON topVillage.usr_village = tbl_villages.id', (err, result) => callback(err, result)); },
 				notMyProvince: (callback) => { province.raw('SELECT name_prov FROM ?? WHERE id NOT IN (SELECT usr_province FROM tbl_usrs)', (err, result) => callback(err, _.map(result, 'name_prov'))); },
 			}, (err, results) => flowCallback(err, _.assign(data, results)));
 		},
 		(data, flowCallback) => {
 			async.parallel({
-				institution: (callback) => { user.raw('SELECT tbl_institution.name_institution, countInstitution.jumlah FROM (SELECT usr_institution, count(*) as jumlah FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_institution) as countInstitution RIGHT JOIN tbl_institution ON countInstitution.usr_institution = tbl_institution.id', (err, result) => callback(err, _.map(result, (o) => ({ name: o.name_institution, jumlah: (o.jumlah || 0) })))); },
-				education: (callback) => { user.raw('SELECT tbl_education.education, countEducation.jumlah FROM (SELECT usr_education, count(*) as jumlah FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_education) as countEducation RIGHT JOIN tbl_education ON countEducation.usr_education = tbl_education.id', (err, result) => callback(err, _.map(result, (o) => ({ name: o.education, jumlah: (o.jumlah || 0) })))); },
-				designation: (callback) => { user.raw('SELECT usr_designation, COUNT(*) as jumlah FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_designation ORDER BY jumlah DESC LIMIT 0,8', (err, result) => callback(err, _.map(result, (o) => ({ name: o.usr_designation, jumlah: (o.jumlah || 0) })))); },
+				institution: (callback) => { user.raw('SELECT tbl_institution.id, tbl_institution.name_institution, countInstitution.jumlah FROM (SELECT usr_institution, count(*) as jumlah FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_institution) as countInstitution RIGHT JOIN tbl_institution ON countInstitution.usr_institution = tbl_institution.id', (err, result) => callback(err, _.map(result, (o) => ({ id: o.id, name: o.name_institution, jumlah: (o.jumlah || 0) })))); },
+				education: (callback) => { user.raw('SELECT tbl_education.id, tbl_education.education, countEducation.jumlah FROM (SELECT usr_education, count(*) as jumlah FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_education) as countEducation RIGHT JOIN tbl_education ON countEducation.usr_education = tbl_education.id', (err, result) => callback(err, _.map(result, (o) => ({ id: o.id, name: o.education, jumlah: (o.jumlah || 0) })))); },
+				designation: (callback) => { user.raw('SELECT usr_designation, COUNT(*) as jumlah FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_designation ORDER BY jumlah DESC LIMIT 0,8', (err, result) => callback(err, _.map(result, (o) => ({ id: o.usr_designation, name: o.usr_designation, jumlah: (o.jumlah || 0) })))); },
 			}, (err, results) => flowCallback(err, _.assign(data, results)));
 		},
 		(data, flowCallback) => {
@@ -239,6 +239,22 @@ module.exports.list = (input, callback) => {
 					break;
 				case 'village':
 					user.raw('SELECT name_desa FROM (SELECT usr_village FROM ?? WHERE last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' GROUP BY usr_village) as location LEFT JOIN tbl_villages ON tbl_villages.id = location.usr_village ORDER BY name_desa', (err, result) => (flowCallback(err, _.map(result, 'name_desa'))));
+					break;
+				case 'education':
+					user.findAll(['usr_display_name'], { where: ['last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' AND usr_education = ?', input.id], orderBy: ['usr_display_name'] }, {}, (err, result) => (flowCallback(err, _.map(result, 'usr_display_name'))));
+					break;
+				case 'institution':
+					user.findAll(['usr_display_name'], { where: ['last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' AND usr_institution = ?', input.id], orderBy: ['usr_display_name'] }, {}, (err, result) => (flowCallback(err, _.map(result, 'usr_display_name'))));
+					break;
+				case 'designation':
+					user.findAll(['usr_display_name'], { where: ['last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' AND usr_designation = ?', input.id], orderBy: ['usr_display_name'] }, {}, (err, result) => (flowCallback(err, _.map(result, 'usr_display_name'))));
+					break;
+				case 'age':
+					let age		= _.includes(input.id, '-') ? input.id.split(' - '): [_.chain(input.id).replace('< ', '').replace(' >=', '').value()];
+					let opertr	= age.length == 1 ? _.chain(input.id).replace(age[0], '').trim().value() : '';
+					let years 	= _.map(age, (o) => moment().subtract(o, 'years').format('YYYY'));
+					let query 	= years.length == 2 ? 'usr_year_born <= ' + years[0] + ' AND usr_year_born > ' + years[1] : 'usr_year_born ' + ( opertr == '<' ? '>' : '<=' ) + ' ' + years[0];
+					user.findAll(['usr_display_name'], { where: ['last_logged_in >= \'' + startDate + '\' AND last_logged_in < \'' + endDate + '\' AND ' + query], orderBy: ['usr_display_name'] }, {}, (err, result) => (flowCallback(err, _.map(result, 'usr_display_name'))));
 					break;
 				default: return flowCallback(null, []);
 			}
