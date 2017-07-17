@@ -39,7 +39,7 @@ class Model {
 	insertOne(data, callback) {
 		if (_.isNil(data.defendant)) { return callback(globalMsg.noaccess); }
 
-		const missing   = _.difference(this.required, _.chain(data).pickBy((o) => (!_.isEmpty(o) || _.isDate(o))).keys().value());
+		const missing   = _.difference(this.required, _.chain(data).pickBy((o) => (!_.isEmpty(o) || _.isInteger(o) || _.isDate(o))).keys().value());
 		if (missing.length === 0) {
 			db.get().query('INSERT INTO ' + this.tableName + ' SET ?', _.pick(data, this.fillable), (err, result) => {
 				if (err) { return callback(globalError(err.code)); }

@@ -121,8 +121,7 @@ module.exports.auth	= (input, callback) => {
 				if (err) { return flowCallback(err); }
 				if (_.isNil(result)) { return flowCallback('username dan password yang anda masukkan tidak cocok.'); }
 
-				let returned = _.pick(result, ['id', 'role']);
-				returned.role = JSON.parse(returned.role);
+				let returned = _.pick(result, ['id']);
 
 				flowCallback(null, returned);
 			});

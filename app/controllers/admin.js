@@ -25,7 +25,7 @@ module.exports.index = (input, callback) => {
 			let query	= _.omitBy({
 				where: !_.isNil(input.like) ? ['name LIKE ?', ['%' + input.like + '%']] : null,
 			}, _.isNil);
-			admin.findAll(query, {limit, offset}, (err, result) => flowCallback(err, _.map(result, (o) => (_.assign(o, { role: JSON.parse(o.role) })))));
+			admin.findAll(query, {limit, offset}, (err, result) => flowCallback(err, result));
 		}
 	], (err, asyncResult) => {
 		if (err) {
@@ -91,7 +91,7 @@ module.exports.show = (id, callback) => {
 				if (err) { return flowCallback(err); }
 				if (_.isNil(result)) { return flowCallback('User with id ' + id + ' not found.'); }
 
-				flowCallback(null, _.assign(result, { role: JSON.parse(result.role) }));
+				flowCallback(null, result);
 			});
 		},
 	], (err, asyncResult) => {

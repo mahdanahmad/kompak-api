@@ -13,7 +13,7 @@ const def_admin		= {
 	username	: 'gapuradesa',
 	password	: hash(hash('ketikaja').toString()).toString(),
 	email		: 'admin@gapura-desa.id',
-	role		: JSON.stringify([]),
+	role		: 1,
 }
 
 let db		= MySQL.createConnection({
@@ -38,7 +38,7 @@ async.waterfall([
 			'username varchar(255) NOT NULL UNIQUE,' +
 			'password varchar(255) NOT NULL,' +
 			'email varchar(255) NOT NULL,' +
-			'role TEXT NOT NULL' +
+			'role BOOLEAN NOT NULL' +
 		')', (err, result) => {
 			if (err) { return flowCallback(err); }
 
